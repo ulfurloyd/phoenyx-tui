@@ -1,10 +1,12 @@
 package main
 
 import (
-	tea "charm.land/bubbletea/v2"
 	"fmt"
 	"os"
 	"os/exec"
+
+	tea "charm.land/bubbletea/v2"
+	lipgloss "charm.land/lipgloss/v2"
 )
 
 type command struct {
@@ -15,11 +17,18 @@ type command struct {
 type model struct {
 	commands []command
 	cursor   int
+	width    int
+	height   int
 }
 
 type shellFinishedMsg struct {
 	err error
 }
+
+var titleStyle = lipgloss.NewStyle().Bold(true)
+var selectedStyle = lipgloss.NewStyle().Bold(true)
+var helpStyle = lipgloss.NewStyle().Faint(true)
+var boxStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).MarginLeft(1).PaddingLeft(2)
 
 func initialModel() model {
 	return model{
@@ -64,12 +73,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
 	}
 	return m, nil
 }
 
 func (m model) View() tea.View {
-	s := "phoenyx\n\n"
+	content := titleStyle.Render("phoenyx") + "\n\n"
+
+	content += m.renderCommands()
+	content += "\n" + helpStyle.Render("↑/↓ or j/k · enter · q")
+
+	box := boxStyle.Width(m.width - 2).Height(m.height - 1)
+	content = box.Render(content)
+
+	v := tea.NewView(content)
+	v.AltScreen = true
+	return v
+}
+
+func (m model) renderCommands() string {
+	s := ""
 
 	for i, command := range m.commands {
 		cursor := " "
@@ -78,14 +104,14 @@ func (m model) View() tea.View {
 			cursor = ">"
 		}
 
-		s += cursor + " " + command.name + "\n"
+		if i == m.cursor {
+			s += cursor + " " + selectedStyle.Render(command.name) + "\n"
+		} else {
+			s += cursor + " " + command.name + "\n"
+		}
 	}
 
-	s += "\nq: quit"
-
-	v := tea.NewView(s)
-	v.AltScreen = true
-	return v
+	return s
 }
 
 func main() {
