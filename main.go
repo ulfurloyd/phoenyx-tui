@@ -7,40 +7,36 @@ import (
 	"os/exec"
 )
 
+type command struct {
+	name string
+	cmd  *exec.Cmd
+}
+
 type model struct {
-	choices []string
-	cursor  int
-	status  string
+	commands []command
+	cursor   int
 }
 
 type shellFinishedMsg struct {
 	err error
 }
 
-func editor() tea.Cmd {
-	return tea.ExecProcess(
-		exec.Command("nvim", os.ExpandEnv("$HOME/.local/share/chezmoi")),
-		nil,
-	)
-}
-
-func shell() tea.Cmd {
-	return tea.ExecProcess(
-		exec.Command("bash"),
-		func(err error) tea.Msg {
-			return shellFinishedMsg{err: err}
-		},
-	)
-}
-
 func initialModel() model {
 	return model{
-		choices: []string{
-			"open phoenyx configs",
-			"open homelab",
-			"shell",
+		commands: []command{
+			{
+				name: "open phoenyx configs",
+				cmd:  exec.Command("nvim", os.ExpandEnv("$HOME/.local/share/chezmoi")),
+			},
+			{
+				name: "open homelab",
+				cmd:  exec.Command("nvim", os.ExpandEnv("$HOME/Projects/phoenyxlab")),
+			},
+			{
+				name: "shell",
+				cmd:  exec.Command("bash"),
+			},
 		},
-		status: "",
 	}
 }
 
@@ -53,7 +49,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		switch msg.String() {
 		case "j", "down", "ctrl+n":
-			if m.cursor < len(m.choices)-1 {
+			if m.cursor < len(m.commands)-1 {
 				m.cursor++
 			}
 		case "k", "up", "ctrl+p":
@@ -61,49 +57,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		case "enter":
-			if m.choices[m.cursor] == "open phoenyx configs" {
-				return m, editor()
-			}
-			if m.choices[m.cursor] == "open homelab" {
-				return m, tea.ExecProcess(
-					exec.Command("nvim", os.ExpandEnv("$HOME/Projects/phoenyxlab")),
-					nil,
-				)
-			}
-			if m.choices[m.cursor] == "shell" {
-				return m, shell()
-			}
-
-			m.status = "Selected:" + m.choices[m.cursor]
+			return m, tea.ExecProcess(
+				m.commands[m.cursor].cmd,
+				nil,
+			)
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
-	case shellFinishedMsg:
-		if msg.err != nil {
-			m.status = "shell exited with an error"
-		} else {
-			m.status = "shell exited successfully"
-		}
-
 	}
-
 	return m, nil
 }
 
 func (m model) View() tea.View {
 	s := "phoenyx\n\n"
 
-	for i, choice := range m.choices {
+	for i, command := range m.commands {
 		cursor := " "
 
 		if i == m.cursor {
 			cursor = ">"
 		}
 
-		s += cursor + " " + choice + "\n"
+		s += cursor + " " + command.name + "\n"
 	}
-
-	s += "\n" + m.status
 
 	s += "\nq: quit"
 
