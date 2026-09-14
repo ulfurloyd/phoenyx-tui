@@ -16,12 +16,13 @@ type command struct {
 }
 
 type model struct {
-	commands  []command
-	cursor    int
-	width     int
-	height    int
-	searching bool
-	search    string
+	commands       []command
+	cursor         int
+	width          int
+	height         int
+	searching      bool
+	search         string
+	previousCursor int
 }
 
 type shellFinishedMsg struct {
@@ -85,10 +86,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "esc":
 				m.searching = false
 				m.search = ""
-				m.cursor = 0
+				m.cursor = m.previousCursor
 			case "enter":
+				if len(filtered) == 0 {
+					return m, nil
+				}
 				m.searching = false
-				m.cursor = 0
+				return m, tea.ExecProcess(
+					filtered[m.cursor].cmd,
+					nil,
+				)
+			case "down", "ctrl+n":
+				if m.cursor < len(filtered)-1 {
+					m.cursor++
+				}
+			case "up", "ctrl+p":
+				if m.cursor > 0 {
+					m.cursor--
+				}
 			case "ctrl+c":
 				return m, tea.Quit
 			default:
@@ -97,8 +112,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.cursor = 0
 				}
 			}
-
-			return m, nil
 		}
 		switch msg.String() {
 		case "j", "down", "ctrl+n":
@@ -127,6 +140,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "/":
 			m.searching = true
 			m.search = ""
+			m.previousCursor = m.cursor
+			m.cursor = 0
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
