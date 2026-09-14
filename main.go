@@ -26,11 +26,24 @@ type shellFinishedMsg struct {
 	err error
 }
 
-var titleStyle = lipgloss.NewStyle().Bold(true)
-var selectedStyle = lipgloss.NewStyle().Bold(true)
-var helpStyle = lipgloss.NewStyle().Faint(true)
-var boxStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).MarginLeft(1).Padding(1)
-var cursorStyle = lipgloss.NewStyle().Bold(true)
+var titleStyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("6")).
+	PaddingLeft(1)
+var cursorStyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("13"))
+var boxStyle = lipgloss.NewStyle().
+	Border(lipgloss.RoundedBorder()).
+	BorderForeground(lipgloss.Color("12")).
+	MarginLeft(1).
+	Padding(1)
+var helpStyle = lipgloss.NewStyle().
+	Faint(true).
+	Foreground(lipgloss.Color("7"))
+var selectedStyle = lipgloss.NewStyle().
+	Bold(true).
+	Foreground(lipgloss.Color("15"))
 
 func initialModel() model {
 	return model{
@@ -126,9 +139,9 @@ func (m model) renderCommands() string {
 		}
 
 		if i == m.cursor {
-			s += cursor + " " + selectedStyle.Render(command.name) + "\n"
+			s += cursor + " " + selectedStyle.Render(command.name) + "\n\n"
 		} else {
-			s += cursor + " " + command.name + "\n"
+			s += cursor + " " + command.name + "\n\n"
 		}
 	}
 
