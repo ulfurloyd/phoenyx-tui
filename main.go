@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	lipgloss "charm.land/lipgloss/v2"
@@ -28,7 +29,8 @@ type shellFinishedMsg struct {
 var titleStyle = lipgloss.NewStyle().Bold(true)
 var selectedStyle = lipgloss.NewStyle().Bold(true)
 var helpStyle = lipgloss.NewStyle().Faint(true)
-var boxStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).MarginLeft(1).PaddingLeft(2)
+var boxStyle = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).MarginLeft(1).Padding(1)
+var cursorStyle = lipgloss.NewStyle().Bold(true)
 
 func initialModel() model {
 	return model{
@@ -81,10 +83,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() tea.View {
-	content := titleStyle.Render("phoenyx") + "\n\n"
+	title := titleStyle.Render("phoenyx")
+	commands := m.renderCommands()
+	help := helpStyle.Render("↑/↓ or j/k · enter · q")
 
-	content += m.renderCommands()
-	content += "\n" + helpStyle.Render("↑/↓ or j/k · enter · q")
+	contentHeight := lipgloss.Height(title) +
+		lipgloss.Height(commands) +
+		lipgloss.Height(help) +
+		2
+	remaining := m.height - contentHeight - 4
+
+	spacer := ""
+	if remaining > 0 {
+		spacer = strings.Repeat("\n", remaining)
+	}
+
+	content := lipgloss.JoinVertical(
+		lipgloss.Left,
+		title,
+		"",
+		commands,
+		spacer,
+		help,
+	)
 
 	box := boxStyle.Width(m.width - 2).Height(m.height - 1)
 	content = box.Render(content)
@@ -101,7 +122,7 @@ func (m model) renderCommands() string {
 		cursor := " "
 
 		if i == m.cursor {
-			cursor = ">"
+			cursor = cursorStyle.Render(">")
 		}
 
 		if i == m.cursor {
