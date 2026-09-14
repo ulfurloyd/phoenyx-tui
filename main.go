@@ -3,6 +3,7 @@ package main
 import (
 	tea "charm.land/bubbletea/v2"
 	"fmt"
+	"os"
 	"os/exec"
 )
 
@@ -14,6 +15,13 @@ type model struct {
 
 type shellFinishedMsg struct {
 	err error
+}
+
+func editor() tea.Cmd {
+	return tea.ExecProcess(
+		exec.Command("nvim", os.ExpandEnv("$HOME/.local/share/chezmoi")),
+		nil,
+	)
 }
 
 func shell() tea.Cmd {
@@ -28,8 +36,8 @@ func shell() tea.Cmd {
 func initialModel() model {
 	return model{
 		choices: []string{
-			"ssh nyx",
-			"ssh hermes",
+			"open phoenyx configs",
+			"open homelab",
 			"shell",
 		},
 		status: "",
@@ -53,6 +61,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		case "enter":
+			if m.choices[m.cursor] == "open phoenyx configs" {
+				return m, editor()
+			}
+			if m.choices[m.cursor] == "open homelab" {
+				return m, tea.ExecProcess(
+					exec.Command("nvim", os.ExpandEnv("$HOME/Projects/phoenyxlab")),
+					nil,
+				)
+			}
 			if m.choices[m.cursor] == "shell" {
 				return m, shell()
 			}
