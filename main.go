@@ -3,6 +3,7 @@ package main
 import (
 	tea "charm.land/bubbletea/v2"
 	"fmt"
+	"os/exec"
 )
 
 type model struct {
@@ -11,12 +12,25 @@ type model struct {
 	status  string
 }
 
+type shellFinishedMsg struct {
+	err error
+}
+
+func shell() tea.Cmd {
+	return tea.ExecProcess(
+		exec.Command("bash"),
+		func(err error) tea.Msg {
+			return shellFinishedMsg{err: err}
+		},
+	)
+}
+
 func initialModel() model {
 	return model{
 		choices: []string{
-			"SSH nyx",
-			"SSH hermes",
-			"Shell",
+			"ssh nyx",
+			"ssh hermes",
+			"shell",
 		},
 		status: "",
 	}
@@ -39,10 +53,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		case "enter":
-			m.status = "selected: " + m.choices[m.cursor]
+			if m.choices[m.cursor] == "shell" {
+				return m, shell()
+			}
+
+			m.status = "Selected:" + m.choices[m.cursor]
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
+	case shellFinishedMsg:
+		if msg.err != nil {
+			m.status = "shell exited with an error"
+		} else {
+			m.status = "shell exited successfully"
+		}
+
 	}
 
 	return m, nil
