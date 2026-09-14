@@ -120,6 +120,10 @@ func (m model) View() tea.View {
 		help,
 	)
 
+	if m.width < 40 || m.height < 20 {
+		return tea.NewView("terminal too small")
+	}
+
 	box := boxStyle.Width(m.width - 2).Height(m.height - 1)
 	content = box.Render(content)
 
@@ -133,16 +137,14 @@ func (m model) renderCommands() string {
 
 	for i, command := range m.commands {
 		cursor := " "
+		name := command.name
 
 		if i == m.cursor {
 			cursor = cursorStyle.Render(">")
+			name = selectedStyle.Render(name)
 		}
 
-		if i == m.cursor {
-			s += cursor + " " + selectedStyle.Render(command.name) + "\n\n"
-		} else {
-			s += cursor + " " + command.name + "\n\n"
-		}
+		s += cursor + " " + name + "\n\n"
 	}
 
 	return s
