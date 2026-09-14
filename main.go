@@ -8,6 +8,7 @@ import (
 type model struct {
 	choices []string
 	cursor  int
+	status  string
 }
 
 func initialModel() model {
@@ -17,6 +18,7 @@ func initialModel() model {
 			"SSH hermes",
 			"Shell",
 		},
+		status: "",
 	}
 }
 
@@ -36,6 +38,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor > 0 {
 				m.cursor--
 			}
+		case "enter":
+			m.status = "selected: " + m.choices[m.cursor]
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
@@ -56,6 +60,8 @@ func (m model) View() tea.View {
 
 		s += cursor + " " + choice + "\n"
 	}
+
+	s += "\n" + m.status
 
 	s += "\nq: quit"
 
