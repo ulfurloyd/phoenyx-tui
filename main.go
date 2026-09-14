@@ -25,7 +25,7 @@ type model struct {
 	previousCursor int
 }
 
-type shellFinishedMsg struct {
+type commandFinishedMsg struct {
 	err error
 }
 
@@ -94,7 +94,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.searching = false
 				return m, tea.ExecProcess(
 					filtered[m.cursor].cmd,
-					nil,
+					func(err error) tea.Msg {
+						return commandFinishedMsg{err: err}
+					},
 				)
 			case "down", "ctrl+n":
 				if m.cursor < len(filtered)-1 {
@@ -148,6 +150,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+	case commandFinishedMsg:
+		m.searching = false
+		m.search = ""
+		m.cursor = m.previousCursor
 	}
 	return m, nil
 }
