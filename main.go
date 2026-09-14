@@ -85,6 +85,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.commands[m.cursor].cmd,
 				nil,
 			)
+		case "g":
+			m.cursor = 0
+		case "G":
+			m.cursor = len(m.commands) - 1
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
@@ -144,7 +148,7 @@ func (m model) renderCommands() string {
 			name = selectedStyle.Render(name)
 		}
 
-		s += cursor + " " + name + "\n\n"
+		s += cursor + " " + name + "\n"
 	}
 
 	return s
