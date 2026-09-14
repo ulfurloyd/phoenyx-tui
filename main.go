@@ -16,10 +16,12 @@ type command struct {
 }
 
 type model struct {
-	commands []command
-	cursor   int
-	width    int
-	height   int
+	commands  []command
+	cursor    int
+	width     int
+	height    int
+	searching bool
+	search    string
 }
 
 type shellFinishedMsg struct {
@@ -69,11 +71,38 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	filtered := m.filteredCommands()
+
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
+		if m.searching {
+			switch msg.String() {
+			case "backspace":
+				if len(m.search) > 0 {
+					m.search = m.search[:len(m.search)-1]
+					m.cursor = 0
+				}
+			case "esc":
+				m.searching = false
+				m.search = ""
+				m.cursor = 0
+			case "enter":
+				m.searching = false
+				m.cursor = 0
+			case "ctrl+c":
+				return m, tea.Quit
+			default:
+				if msg.Text != "" {
+					m.search += msg.Text
+					m.cursor = 0
+				}
+			}
+
+			return m, nil
+		}
 		switch msg.String() {
 		case "j", "down", "ctrl+n":
-			if m.cursor < len(m.commands)-1 {
+			if m.cursor < len(filtered)-1 {
 				m.cursor++
 			}
 		case "k", "up", "ctrl+p":
@@ -81,14 +110,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor--
 			}
 		case "enter":
+			if len(filtered) == 0 {
+				return m, nil
+			}
+
 			return m, tea.ExecProcess(
-				m.commands[m.cursor].cmd,
+				filtered[m.cursor].cmd,
 				nil,
 			)
 		case "g":
 			m.cursor = 0
 		case "G":
-			m.cursor = len(m.commands) - 1
+			if len(filtered) > 0 {
+				m.cursor = len(filtered) - 1
+			}
+		case "/":
+			m.searching = true
+			m.search = ""
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
@@ -102,11 +140,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() tea.View {
 	title := titleStyle.Render("phoenyx")
 	commands := m.renderCommands()
+	search := ""
+	if m.searching {
+		search = "/ " + m.search
+	}
 	help := helpStyle.Render("↑/↓ or j/k · enter · q")
 
 	contentHeight := lipgloss.Height(title) +
 		lipgloss.Height(commands) +
 		lipgloss.Height(help) +
+		lipgloss.Height(search) +
 		2
 	remaining := m.height - contentHeight - 4
 
@@ -119,6 +162,7 @@ func (m model) View() tea.View {
 		lipgloss.Left,
 		title,
 		"",
+		search,
 		commands,
 		spacer,
 		help,
@@ -139,7 +183,7 @@ func (m model) View() tea.View {
 func (m model) renderCommands() string {
 	s := ""
 
-	for i, command := range m.commands {
+	for i, command := range m.filteredCommands() {
 		cursor := " "
 		name := command.name
 
@@ -152,6 +196,21 @@ func (m model) renderCommands() string {
 	}
 
 	return s
+}
+
+func (m model) filteredCommands() []command {
+	if m.search == "" {
+		return m.commands
+	}
+
+	var filtered []command
+	for _, command := range m.commands {
+		if strings.Contains(strings.ToLower(command.name), strings.ToLower(m.search)) {
+			filtered = append(filtered, command)
+		}
+	}
+
+	return filtered
 }
 
 func main() {
