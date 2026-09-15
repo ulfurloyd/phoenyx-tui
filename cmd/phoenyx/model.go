@@ -24,16 +24,22 @@ type commandFinishedMsg struct {
 	err error
 }
 
+func newNvimCommand(dir string) *exec.Cmd {
+	cmd := exec.Command("nvim", dir)
+	cmd.Dir = dir
+	return cmd
+}
+
 func initialModel() model {
 	return model{
 		commands: []command{
 			{
 				name: "open phoenyx configs",
-				cmd:  exec.Command("nvim", os.ExpandEnv("$HOME/.local/share/chezmoi")),
+				cmd:  newNvimCommand(os.ExpandEnv("$HOME/.local/share/chezmoi")),
 			},
 			{
 				name: "open homelab",
-				cmd:  exec.Command("nvim", os.ExpandEnv("$HOME/Projects/phoenyxlab")),
+				cmd:  newNvimCommand(os.ExpandEnv("$HOME/Projects/phoenyxlab")),
 			},
 			{
 				name: "shell",
