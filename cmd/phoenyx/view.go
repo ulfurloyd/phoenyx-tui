@@ -29,6 +29,7 @@ var selectedStyle = lipgloss.NewStyle().
 func (m model) View() tea.View {
 	title := titleStyle.Render("phoenyx")
 	commands := m.renderCommands()
+	description := m.renderDescription()
 	search := ""
 	if m.searching {
 		search = "/ " + m.search
@@ -38,6 +39,7 @@ func (m model) View() tea.View {
 	contentHeight := lipgloss.Height(title) +
 		lipgloss.Height(commands) +
 		lipgloss.Height(help) +
+		lipgloss.Height(description) +
 		lipgloss.Height(search) +
 		2
 	remaining := m.height - contentHeight - 4
@@ -53,6 +55,7 @@ func (m model) View() tea.View {
 		"",
 		search,
 		commands,
+		description,
 		spacer,
 		help,
 	)
@@ -85,4 +88,16 @@ func (m model) renderCommands() string {
 	}
 
 	return s
+}
+
+func (m model) renderDescription() string {
+	filtered := m.filteredCommands()
+
+	if len(filtered) <= 0 {
+		return ""
+	}
+
+	description := filtered[m.cursor].description
+
+	return helpStyle.Render(description)
 }
