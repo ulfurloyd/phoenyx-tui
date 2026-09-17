@@ -17,6 +17,7 @@ type model struct {
 	width          int
 	height         int
 	searching      bool
+	help           bool
 	search         string
 	previousCursor int
 }

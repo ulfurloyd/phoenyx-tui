@@ -30,6 +30,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
+		if m.help {
+			switch msg.String() {
+			case "?", "esc", "q", "ctrl+c":
+				m.help = false
+			}
+			return m, nil
+		}
 		if m.searching {
 			switch msg.String() {
 			case "backspace":
@@ -98,6 +105,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.search = ""
 			m.previousCursor = m.cursor
 			m.cursor = 0
+		case "?":
+			m.help = true
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
