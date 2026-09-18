@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -24,6 +27,12 @@ type model struct {
 	search         string
 	previousCursor int
 	currentTime    time.Time
+	cpuUsage       float64
+	memUsage       float64
+	ssdUsage       float64
+	hddUsage       float64
+	prevTotal      int64
+	prevIdle       int64
 }
 
 type commandFinishedMsg struct {
@@ -42,6 +51,30 @@ func tick() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
+}
+
+func readCPUStat() ([]byte, error) {
+	data, err := os.ReadFile("/proc/stat")
+	if err != nil {
+		return nil, fmt.Errorf("could not read /proc/stat: %w", err)
+	}
+
+	for line := range strings.Lines(string(data)) {
+		fields := strings.Fields(line)
+		if len(fields) == 0 {
+			continue
+		}
+
+		if fields[0] == "cpu" {
+			for _, field := range fields[1:] {
+				fieldVal, err := strconv.Atoi(field)
+				if err != nil {
+				}
+			}
+		}
+	}
+
+	return data, nil
 }
 
 func initialModel() model {
