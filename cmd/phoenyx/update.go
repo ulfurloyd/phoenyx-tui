@@ -2,12 +2,13 @@ package main
 
 import (
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 )
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return tick()
 }
 
 func (m model) filteredCommands() []command {
@@ -110,6 +111,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return m, tea.Quit
 		}
+	case tickMsg:
+		m.currentTime = time.Time(msg)
+		return m, tick()
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height

@@ -2,6 +2,7 @@ package main
 
 import (
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	lipgloss "charm.land/lipgloss/v2"
@@ -27,17 +28,36 @@ var selectedStyle = lipgloss.NewStyle().
 	Foreground(lipgloss.Color("15"))
 
 func (m model) View() tea.View {
-	title := titleStyle.Render("phoenyx")
-	content := ""
-
 	if m.width < 40 || m.height < 20 {
 		return tea.NewView("terminal too small")
 	}
 
+	title := titleStyle.Render("phoenyx")
+	currentTime := titleStyle.Render(m.currentTime.Format(time.TimeOnly))
+	content := ""
+	ribbon := ""
+
+	ribbonWidth := lipgloss.Width(title) +
+		lipgloss.Width(currentTime) +
+		2
+	remainingWidth := m.width - ribbonWidth - 4
+
+	ribbonSpacer := ""
+	if remainingWidth > 0 {
+		ribbonSpacer = strings.Repeat(" ", remainingWidth)
+	}
+
+	ribbon = lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		title,
+		ribbonSpacer,
+		currentTime,
+	)
+
 	if m.help {
 		content = lipgloss.JoinVertical(
 			lipgloss.Left,
-			title,
+			ribbon,
 			"",
 			m.renderHelp(),
 		)
@@ -50,7 +70,7 @@ func (m model) View() tea.View {
 		}
 		help := helpStyle.Render("press `?` for keybinds")
 
-		contentHeight := lipgloss.Height(title) +
+		contentHeight := lipgloss.Height(ribbon) +
 			lipgloss.Height(commands) +
 			lipgloss.Height(help) +
 			lipgloss.Height(description) +
@@ -63,9 +83,12 @@ func (m model) View() tea.View {
 			spacer = strings.Repeat("\n", remaining)
 		}
 
+		// ribbonWidth := lipgloss.Width(title) +
+		// 	lipgloss.Width(currentTime.String())
+		//
 		content = lipgloss.JoinVertical(
 			lipgloss.Left,
-			title,
+			ribbon,
 			"",
 			search,
 			commands,

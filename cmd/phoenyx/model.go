@@ -3,6 +3,9 @@ package main
 import (
 	"os"
 	"os/exec"
+	"time"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 type command struct {
@@ -20,16 +23,25 @@ type model struct {
 	help           bool
 	search         string
 	previousCursor int
+	currentTime    time.Time
 }
 
 type commandFinishedMsg struct {
 	err error
 }
 
+type tickMsg time.Time
+
 func newNvimCommand(dir string) *exec.Cmd {
 	cmd := exec.Command("nvim", dir)
 	cmd.Dir = dir
 	return cmd
+}
+
+func tick() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
 }
 
 func initialModel() model {
@@ -51,5 +63,6 @@ func initialModel() model {
 				description: "open an interactive shell",
 			},
 		},
+		currentTime: time.Now(),
 	}
 }
