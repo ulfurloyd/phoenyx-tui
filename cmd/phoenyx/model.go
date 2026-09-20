@@ -105,6 +105,22 @@ func calculateCPUUsage(previousTotal int64, previousIdle int64, currentTotal int
 	return cpuUsage
 }
 
+func readMemoryUsage() (float64, error) {
+	data, err := os.ReadFile("/proc/meminfo")
+	if err != nil {
+		return 0, fmt.Errorf("could not read /proc/meminfo: %w", err)
+	}
+	var total int64
+	var available int64
+
+	for line := range strings.Lines(string(data)) {
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+	}
+}
+
 func initialModel() model {
 	return model{
 		commands: []command{
