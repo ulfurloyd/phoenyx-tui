@@ -33,6 +33,7 @@ type model struct {
 	hddUsage       float64
 	prevTotal      int64
 	prevIdle       int64
+	cpuInitialized bool
 }
 
 type commandFinishedMsg struct {
@@ -53,11 +54,15 @@ func tick() tea.Cmd {
 	})
 }
 
-func readCPUStat() ([]byte, error) {
+func readCPUStat() (int64, int64, error) {
 	data, err := os.ReadFile("/proc/stat")
 	if err != nil {
-		return nil, fmt.Errorf("could not read /proc/stat: %w", err)
+		return 0, 0, fmt.Errorf("could not read /proc/stat: %w", err)
 	}
+
+	found := false
+	var total int64
+	var idle int64
 
 	for line := range strings.Lines(string(data)) {
 		fields := strings.Fields(line)
@@ -66,15 +71,38 @@ func readCPUStat() ([]byte, error) {
 		}
 
 		if fields[0] == "cpu" {
-			for _, field := range fields[1:] {
+			found = true
+			for i, field := range fields[1:] {
 				fieldVal, err := strconv.Atoi(field)
 				if err != nil {
+					return 0, 0, fmt.Errorf("could not parse CPU stat: %w", err)
+				}
+
+				total += int64(fieldVal)
+
+				if i == 3 {
+					idle = int64(fieldVal)
 				}
 			}
 		}
 	}
 
-	return data, nil
+	if !found {
+		return 0, 0, fmt.Errorf("aggregate CPU stats not found")
+	}
+
+	return total, idle, nil
+}
+
+func calculateCPUUsage(previousTotal int64, previousIdle int64, currentTotal int64, currentIdle int64) float64 {
+	totalDelta := currentTotal - previousTotal
+	if totalDelta == 0 {
+		return 0
+	}
+	idleDelta := currentIdle - previousIdle
+	cpuUsage := (1 - float64(idleDelta)/float64(totalDelta)) * 100
+
+	return cpuUsage
 }
 
 func initialModel() model {
