@@ -55,11 +55,27 @@ func (m model) View() tea.View {
 	)
 
 	if m.help {
+		help := helpStyle.Render("press `?` to return")
+		contentHeight := lipgloss.Height(ribbon) +
+			lipgloss.Height("") +
+			lipgloss.Height(m.renderHelp()) +
+			lipgloss.Height(help) +
+			2
+		remaining := m.height - contentHeight - 4
+
+		spacer := ""
+		if remaining > 0 {
+			spacer = strings.Repeat("\n", remaining)
+		}
+
 		content = lipgloss.JoinVertical(
 			lipgloss.Left,
 			ribbon,
 			"",
 			m.renderHelp(),
+			spacer,
+			"",
+			help,
 		)
 	} else {
 		commands := m.renderCommands()
