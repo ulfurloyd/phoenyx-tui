@@ -113,6 +113,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tickMsg:
 		m.currentTime = time.Time(msg)
+		currentTotal, currentIdle, err := readCPUStat()
+		if err != nil {
+			return m, tick()
+		}
+		if !m.cpuInitialized {
+			m.prevTotal = currentTotal
+			m.prevIdle = currentIdle
+			m.cpuInitialized = true
+		} else {
+			m.cpuUsage = calculateCPUUsage(
+				m.prevTotal,
+				m.prevIdle,
+				currentTotal,
+				currentIdle,
+			)
+
+			m.prevTotal = currentTotal
+			m.prevIdle = currentIdle
+		}
 		return m, tick()
 	case tea.WindowSizeMsg:
 		m.width = msg.Width

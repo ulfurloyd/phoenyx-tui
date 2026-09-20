@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -81,6 +82,7 @@ func (m model) View() tea.View {
 		commands := m.renderCommands()
 		description := m.renderDescription()
 		search := ""
+		cpu := fmt.Sprintf("CPU: %.f%%", m.cpuUsage)
 		if m.searching {
 			search = "/ " + m.search
 		}
@@ -110,6 +112,7 @@ func (m model) View() tea.View {
 			commands,
 			description,
 			spacer,
+			cpu,
 			help,
 		)
 	}
