@@ -49,6 +49,11 @@
         default = {
           type = "app";
           program = "${self.packages.${system}.default}/bin/phoenyx";
+          meta = {
+            description = "A terminal interface for managing systems and projects";
+            mainProgram = "phoenyx";
+            platforms = systems;
+          };
         };
       });
       devShells = forAllSystems (
