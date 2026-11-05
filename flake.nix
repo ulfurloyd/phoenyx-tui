@@ -38,7 +38,7 @@
                 vendorHash = "sha256-bxnj5fGcXAp1veo600mmq5f7SM2D4/WNekfWFYu8jOk=";
                 doCheck = true;
                 meta = {
-                  description = "A terminal interface for managing systems and projects";
+                  description = "A terminal interface for managing phoenyx systems and projects";
                   mainProgram = "phoenyx";
                   platforms = systems;
                 };
